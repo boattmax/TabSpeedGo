@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8" />
+  <title>Tap Speed - Student Edition</title>
+  <style>
+    body {
+      margin: 0;
+      background: radial-gradient(circle at top, #181a3f, #050710 60%);
+      color: #fff;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .container {
+      width: 100%;
+      max-width: 420px;
+      padding: 20px 16px 32px;
+      box-sizing: border-box;
+    }
+    h1, h2, h3, p {
+      text-align: center;
+      margin: 6px 0;
+    }
+    h1 { font-size: 26px; }
+    h2 { font-size: 20px; }
+    h3 {
+      font-size: 16px;
+      font-weight: 400;
+      opacity: 0.9;
+    }
+    input {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: none;
+      margin-top: 10px;
+      box-sizing: border-box;
+      font-size: 16px;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      border-radius: 999px;
+      border: none;
+      margin-top: 12px;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: transform 0.08s ease, box-shadow 0.08s ease, opacity 0.1s;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    }
+    button:active:not(:disabled) {
+      transform: translateY(1px) scale(0.98);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    }
+    button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #ff4b4b, #ff7b54);
+      color: #fff;
+    }
+    .btn-secondary {
+      background: #222;
+      color: #fff;
+    }
+    .btn-boost-on {
+      background: #3cb371;
+      color: #fff;
+    }
+    .btn-bigtap-on {
+      background: #2563eb;
+      color: #fff;
+    }
+    .hidden {
+      display: none;
+    }
+
+    /* ====== XP BAR STYLE - Mobile Legends feel ====== */
+    #xpSection {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 6px;
+    }
+
+    #levelBadge {
+      min-width: 52px;
+      height: 52px;
+      border-radius: 999px;
+      background: radial-gradient(circle at 30% 30%, #ffd86b, #c6902f);
+      border: 2px solid #fff1b8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: #2b1600;
+      box-shadow: 0 0 10px rgba(255, 214, 94, 0.6);
+    }
+
+    #levelBadgeText {
+      font-size: 16px;
+      margin-left: 3px;
+    }
+
+    #xpBarOuter {
+      flex: 1;
+    }
+
+    #xpBarInner {
+      position: relative;
+      width: 100%;
+      height: 18px;
+      border-radius: 999px;
+      padding: 2px;
+      background: linear-gradient(135deg, #3b3f6a, #15172b);
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.15),
+        0 0 12px rgba(0, 180, 255, 0.35);
+    }
+
+    #xpBarFill {
+      position: relative;
+      width: 0%;
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #00d4ff, #4f46e5, #a855f7);
+      box-shadow: inset 0 0 4px rgba(255, 255, 255, 0.5);
+      transition: width 0.35s ease-out;
+    }
+
+    /* หัวกลมเรือง ๆ ปลายแถบเหมือนเกม MOBA */
+    #xpBarFill::after {
+      content: "";
+      position: absolute;
+      right: -6px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 14px;
+      height: 14px;
+      border-radius: 999px;
+      background: radial-gradient(circle at 30% 30%, #ffffff, #00e5ff);
+      box-shadow:
+        0 0 8px rgba(0, 229, 255, 0.9),
+        0 0 16px rgba(0, 229, 255, 0.7);
+    }
+
+    #xpBarLabel {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 600;
+      color: #e4f3ff;
+      text-shadow: 0 0 4px rgba(0, 0, 0, 0.8);
+      pointer-events: none;
+    }
+
+    #gameScreen {
+      position: relative;
+    }
+
+    #tapButton {
+      width: 260px;
+      height: 260px;
+      border-radius: 9999px;
+      background: radial-gradient(circle at 30% 30%, #ff8888, #ff3434);
+      border: none;
+      font-size: 28px;
+      color: white;
+      margin: 24px auto 0;
+      display: block;
+    }
+    #tapButton:active:not(:disabled) {
+      background: radial-gradient(circle at 30% 30%, #ffb0b0, #ff5050);
+    }
+
+    /* พื้นที่ Big Tap (ปุ่มสี่เหลี่ยมใหญ่) */
+    #bigTapArea {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 140px;
+      bottom: 0;
+      border-radius: 16px;
+      background: radial-gradient(circle at top, rgba(255,255,255,0.06), rgba(0,0,0,0.4));
+    }
+
+    #timerText {
+      font-size: 32px;
+      margin-top: 8px;
+    }
+    #mobileWarning {
+      color: #ffb347;
+      text-align: center;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+    .chip {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(0,0,0,0.3);
+      font-size: 12px;
+      margin-top: 4px;
+    }
+    .mission-box {
+      margin-top: 10px;
+      padding: 8px 10px;
+      border-radius: 12px;
+      background: rgba(0,0,0,0.35);
+      font-size: 13px;
+    }
+    .mission-line {
+      margin: 2px 0;
+    }
+    .mission-done {
+      color: #7CFC7C;
+    }
+    .mission-pending {
+      color: #ffd27f;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      font-size: 14px;
+    }
+    th, td {
+      padding: 4px 6px;
+      border-bottom: 1px solid #333;
+      text-align: left;
+    }
+    th { background: #111; }
+
+    /* ==== Tap Effect (หัวใจลอยยาวขึ้นสุดจอ) ==== */
+    .tap-effect {
+      position: fixed;
+      pointer-events: none;
+      width: 48px;
+      height: 48px;
+      animation: tap-rise-slow 2.7s ease-out forwards;
+      z-index: 9999;
+    }
+
+    /* หัวใจใหญ่ขึ้น 2 เท่า */
+    .effect-heart::before {
+      content: "❤";
+      display: block;
+      width: 100%;
+      height: 100%;
+      font-size: 48px;
+      text-align: center;
+      line-height: 48px;
+      color: #ff4b8b;
+      text-shadow:
+        0 0 4px rgba(255, 255, 255, 0.9),
+        0 0 10px rgba(255, 75, 139, 0.9);
+    }
+
+    @keyframes tap-rise-slow {
+      0% {
+        opacity: 0;
+        transform: translate(-50%, 0) scale(0.7);
+      }
+      10% {
+        opacity: 1;
+        transform: translate(-50%, -5vh) scale(1);
+      }
+      100% {
+        opacity: 0;
+        transform: translate(var(--end-x), var(--end-y)) scale(1.2);
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <div id="mobileWarning" class="hidden">
+    กรุณาเปิดเกมนี้บน <b>มือถือ</b> เท่านั้น
+  </div>
+
+  <!-- หน้าล็อกอินด้วยรหัสนักศึกษา -->
+  <div id="loginScreen">
+    <h1>Tap Speed</h1>
+    <h3>เวอร์ชันทดสอบในวิทยาลัย</h3>
+    <p>กรุณาใส่ <b>รหัสนักศึกษาและ wallet (ถ้ามี)</b> เพื่อเริ่มเล่น</p>
+    <input id="studentIdInput" type="text" placeholder="เช่น 66001234" />
+    <input id="walletInput" type="text" placeholder="ที่อยู่กระเป๋า (ถ้ามี)" style="margin-top:8px;" />
+    <button id="loginBtn" class="btn-primary">เริ่มต้น</button>
+    <p class="chip">ระบบจะเก็บเฉพาะรหัส + คะแนนสูงสุด + wallet + เลเวล/XP/Points</p>
+  </div>
+  <p id="levelText" class="hidden"></p>
+
+  <!-- หน้าเกม -->
+  <div id="gameScreen" class="hidden">
+    <h2>Tap Speed (1 วินาที)</h2>
+    <p id="studentLabel"></p>
+
+    <!-- ส่วน XP/Level แบบ Mobile Legends -->
+    <div id="xpSection">
+      <div id="levelBadge">
+        Lv <span id="levelBadgeText">1</span>
+      </div>
+      <div id="xpBarOuter">
+        <div id="xpBarInner">
+          <div id="xpBarFill"></div>
+          <span id="xpBarLabel">0 / 100 XP</span>
+        </div>
+      </div>
+    </div>
+
+    <p id="pointsText">Points: 0</p>
+
+    <p>แตะปุ่มให้เร็วที่สุดภายใน 1 วินาที</p>
+    <h2 id="timerText">พร้อม</h2>
+    <h3 id="tapCountText">แตะ 0 ครั้ง</h3>
+
+    <!-- พื้นที่ Big Tap (เต็มสี่เหลี่ยม) -->
+    <div id="bigTapArea" class="hidden"></div>
+    <!-- ปุ่มวงกลมแดงปกติ -->
+    <button id="tapButton">เริ่ม!</button>
+
+    <div class="mission-box">
+      <div class="mission-line" id="missionPlayText">🔸 เล่นวันนี้ 0/5 รอบ</div>
+      <div class="mission-line" id="mission15Text">🔸 ยังไม่เคยทำ ≥15 taps วันนี้</div>
+    </div>
+
+    <button id="restartBtn" class="btn-secondary hidden">เริ่มใหม่</button>
+    <button id="boostBtn" class="btn-secondary">ใช้ 5 พอยท์ x2 XP รอบนี้</button>
+    <button id="bigTapBtn" class="btn-secondary">ใช้ 5 พอยท์ โหมดสี่เหลี่ยมใหญ่ (0/10)</button>
+    <button id="showResultBtn" class="btn-secondary hidden">ดูผลรอบนี้</button>
+    <button id="showRankingBtn" class="btn-secondary">ดู Ranking</button>
+  </div>
+
+  <!-- หน้าผลลัพธ์ -->
+  <div id="resultScreen" class="hidden">
+    <h2>ผลรอบนี้</h2>
+    <p id="resultText"></p>
+    <p id="bestText"></p>
+    <p id="statsText"></p>
+    <p id="badgesText"></p>
+    <button id="playAgainBtn" class="btn-primary">เล่นอีกครั้ง</button>
+    <button id="showRankingBtn2" class="btn-secondary">ดู Ranking</button>
+  </div>
+
+  <!-- หน้า Ranking -->
+  <div id="rankingScreen" class="hidden">
+    <h2>Top Ranking</h2>
+    <p id="selfScoreText"></p>
+    <div id="rankingTableWrapper"></div>
+    <button id="backToGameBtn" class="btn-secondary">กลับไปหน้าเกม</button>
+  </div>
+
+</div>
+
+<script>
+  // --------- เช็คว่าเป็นมือถือไหม ----------
+  function isMobile() {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i
+      .test(navigator.userAgent);
+  }
+
+  const mobileWarning = document.getElementById('mobileWarning');
+  if (!isMobile()) {
+    mobileWarning.classList.remove('hidden');
+  }
+
+  // ---- XP BAR: อัปเดตตาม level + totalXp ----
+  function updateXPUI() {
+    const levelBadgeText = document.getElementById('levelBadgeText');
+    const xpBarFill = document.getElementById('xpBarFill');
+    const xpBarLabel = document.getElementById('xpBarLabel');
+
+    if (!levelBadgeText || !xpBarFill || !xpBarLabel) return;
+
+    levelBadgeText.textContent = myLevel;
+
+    const xpMinForThisLevel = 100 * (myLevel - 1) * (myLevel - 1);
+    const xpMinForNextLevel = 100 * myLevel * myLevel;
+
+    let currentLevelXp = myTotalXp - xpMinForThisLevel;
+    let requiredXp = xpMinForNextLevel - xpMinForThisLevel;
+
+    if (currentLevelXp < 0) currentLevelXp = 0;
+    if (requiredXp <= 0) requiredXp = 1;
+
+    let percent = (currentLevelXp / requiredXp) * 100;
+    if (percent < 0) percent = 0;
+    if (percent > 100) percent = 100;
+
+    xpBarFill.style.width = percent + '%';
+    xpBarLabel.textContent = `${currentLevelXp} / ${requiredXp} XP`;
+  }
+
+  // ปรับขนาดปุ่มวงกลมตามเลเวล
+  function updateTapButtonScale() {
+    if (!tapButton) return;
+    let scale = 1.0;
+    if (myLevel >= 10) scale = 1.1;
+    else if (myLevel >= 7) scale = 1.0;
+    else if (myLevel >= 4) scale = 0.9;
+    else scale = 0.8;
+    tapButton.style.transform = `scale(${scale})`;
+  }
+
+  // --------- ตัวแปรหลัก ----------
+  const loginScreen = document.getElementById('loginScreen');
+  const gameScreen = document.getElementById('gameScreen');
+  const resultScreen = document.getElementById('resultScreen');
+  const rankingScreen = document.getElementById('rankingScreen');
+
+  const studentIdInput = document.getElementById('studentIdInput');
+  const walletInput = document.getElementById('walletInput');
+  const loginBtn = document.getElementById('loginBtn');
+
+  const studentLabel = document.getElementById('studentLabel');
+
+  const pointsText = document.getElementById('pointsText');
+  const timerText = document.getElementById('timerText');
+  const tapCountText = document.getElementById('tapCountText');
+  const tapButton = document.getElementById('tapButton');
+  const bigTapArea = document.getElementById('bigTapArea');
+  const showResultBtn = document.getElementById('showResultBtn');
+  const showRankingBtn = document.getElementById('showRankingBtn');
+  const showRankingBtn2 = document.getElementById('showRankingBtn2');
+  const restartBtn = document.getElementById('restartBtn');
+  const boostBtn = document.getElementById('boostBtn');
+  const bigTapBtn = document.getElementById('bigTapBtn');
+
+  const missionPlayText = document.getElementById('missionPlayText');
+  const mission15Text = document.getElementById('mission15Text');
+
+  const resultText = document.getElementById('resultText');
+  const bestText = document.getElementById('bestText');
+  const statsText = document.getElementById('statsText');
+  const badgesText = document.getElementById('badgesText');
+  const playAgainBtn = document.getElementById('playAgainBtn');
+
+  const rankingTableWrapper = document.getElementById('rankingTableWrapper');
+  const selfScoreText = document.getElementById('selfScoreText');
+  const backToGameBtn = document.getElementById('backToGameBtn');
+
+  // ---- Tap Effect: ตั้งค่าประเภทเอฟเฟกต์ (อนาคตเอาไว้ "ซื้อสกิน") ----
+  let currentEffect = 'heart';
+
+  let studentId = null;
+  let walletAddress = null;
+  let isPlaying = false;
+  let canTapNow = false;
+  let taps = 0;
+  const duration = 1000; // 1 วินาที
+  let lastRoundTaps = 0;
+  let myBestScore = null;
+  let myLevel = 1;
+  let myTotalXp = 0;
+  let myTotalPlays = 0;
+  let myBadges = [];
+
+  let myPoints = 0;
+  let boostSelected = false;
+
+  let bigTapSelected = false;
+  let bigTapUsesToday = 0;
+  const BIG_TAP_LIMIT = 10;
+
+  // daily mission state
+  let todayPlays = 0;
+  let todayBest = 0;
+  let missionPlayed5 = false;
+  let missionGot15 = false;
+
+  // anti-cheat: เก็บเวลาแตะแต่ละครั้ง (ms)
+  let tapTimestamps = [];
+
+  function spawnTapEffect() {
+    const rect = tapButton.getBoundingClientRect();
+    const baseX = rect.left + rect.width / 2;
+    const baseY = rect.top + rect.height / 2;
+
+    const el = document.createElement('div');
+    el.classList.add('tap-effect', `effect-${currentEffect}`);
+
+    const startOffsetX = (Math.random() * 50) - 25;  // -25 ถึง +25
+    el.style.left = (baseX + startOffsetX) + 'px';
+    el.style.top = (baseY - 20) + 'px';
+
+    const endX = (Math.random() * 300) - 150;   // -150 ถึง +150 px
+    const endY = - (200 + Math.random() * 400); // -200 ถึง -600 px
+
+    el.style.setProperty('--end-x', endX + 'px');
+    el.style.setProperty('--end-y', endY + 'px');
+
+    document.body.appendChild(el);
+
+    setTimeout(() => el.remove(), 3000);
+  }
+
+  // --------- ฟังก์ชันเปลี่ยนหน้า ----------
+  function showScreen(screen) {
+    [loginScreen, gameScreen, resultScreen, rankingScreen].forEach(el => {
+      el.classList.add('hidden');
+    });
+    screen.classList.remove('hidden');
+  }
+
+  function updateMissionUI() {
+    if (missionPlayed5) {
+      missionPlayText.textContent = `✅ เล่นครบ ${todayPlays}/5 รอบแล้ววันนี้`;
+      missionPlayText.classList.add('mission-done');
+      missionPlayText.classList.remove('mission-pending');
+    } else {
+      missionPlayText.textContent = `🔸 เล่นวันนี้ ${todayPlays}/5 รอบ`;
+      missionPlayText.classList.add('mission-pending');
+      missionPlayText.classList.remove('mission-done');
+    }
+
+    if (missionGot15) {
+      mission15Text.textContent = `✅ เคยทำ ≥15 taps วันนี้ (วันนี้เคยทำสูงสุด ${todayBest} ครั้ง)`;
+      mission15Text.classList.add('mission-done');
+      mission15Text.classList.remove('mission-pending');
+    } else {
+      mission15Text.textContent = `🔸 ยังไม่เคยทำ ≥15 taps วันนี้ (สูงสุดวันนี้ ${todayBest} ครั้ง)`;
+      mission15Text.classList.add('mission-pending');
+      mission15Text.classList.remove('mission-done');
+    }
+  }
+
+  function updatePointsUI() {
+    pointsText.textContent = `Points: ${myPoints}`;
+
+    if (boostSelected) {
+      boostBtn.classList.add('btn-boost-on');
+      boostBtn.textContent = 'ใช้ x2 XP รอบนี้ (เปิดอยู่)';
+    } else {
+      boostBtn.classList.remove('btn-boost-on');
+      boostBtn.textContent = 'ใช้ 5 พอยท์ x2 XP รอบนี้';
+    }
+
+    boostBtn.disabled = myPoints < 5 && !boostSelected;
+  }
+
+  function updateBigTapUI() {
+    if (!bigTapBtn) return;
+    if (bigTapSelected) {
+      bigTapBtn.classList.add('btn-bigtap-on');
+      bigTapBtn.textContent = `โหมดสี่เหลี่ยมใหญ่ (เปิดอยู่) ใช้ไปแล้ว ${bigTapUsesToday}/${BIG_TAP_LIMIT}`;
+    } else {
+      bigTapBtn.classList.remove('btn-bigtap-on');
+      bigTapBtn.textContent = `ใช้ 5 พอยท์ โหมดสี่เหลี่ยมใหญ่ (${bigTapUsesToday}/${BIG_TAP_LIMIT})`;
+    }
+
+    const noPoint = myPoints < 5 && !bigTapSelected;
+    const noQuota = bigTapUsesToday >= BIG_TAP_LIMIT;
+    bigTapBtn.disabled = noPoint || noQuota || isPlaying;
+  }
+
+  function updateTapModeUI() {
+    if (bigTapSelected) {
+      bigTapArea.classList.remove('hidden');
+      tapButton.classList.add('hidden');
+    } else {
+      bigTapArea.classList.add('hidden');
+      tapButton.classList.remove('hidden');
+    }
+  }
+
+  // --------- ล็อกอินด้วยรหัสนักศึกษา + wallet ----------
+  loginBtn.addEventListener('click', () => {
+    const id = studentIdInput.value.trim();
+    if (!id) {
+      alert('กรุณาใส่รหัสนักศึกษา');
+      return;
+    }
+    studentId = id;
+
+    const w = (walletInput.value || '').trim();
+    walletAddress = w || null;
+
+    studentLabel.innerText = walletAddress
+      ? `รหัสนักศึกษา: ${studentId}\nWallet: ${walletAddress}`
+      : `รหัสนักศึกษา: ${studentId}`;
+
+    timerText.innerText = 'พร้อม';
+    tapCountText.innerText = 'แตะ 0 ครั้ง';
+    tapButton.innerText = 'เริ่ม!';
+    tapButton.disabled = false;
+    showResultBtn.classList.add('hidden');
+    restartBtn.classList.add('hidden');
+
+    updateXPUI();
+    updateTapButtonScale();
+    updateMissionUI();
+    updatePointsUI();
+    updateBigTapUI();
+    updateTapModeUI();
+
+    todayPlays = 0;
+    todayBest = 0;
+    missionPlayed5 = false;
+    missionGot15 = false;
+    updateMissionUI();
+
+    showScreen(gameScreen);
+  });
+
+  // --------- ปุ่ม Boost XP ----------
+  boostBtn.addEventListener('click', () => {
+    if (boostSelected) {
+      boostSelected = false;
+      updatePointsUI();
+      return;
+    }
+    if (myPoints < 5) {
+      alert('พอยท์ไม่พอ ต้องใช้ 5 พอยท์');
+      return;
+    }
+    if (isPlaying) {
+      alert('กำลังเล่นอยู่ ใช้บูสต์ได้รอบถัดไป');
+      return;
+    }
+    boostSelected = true;
+    updatePointsUI();
+  });
+
+  // --------- ปุ่ม Big Tap (โหมดสี่เหลี่ยมใหญ่) ----------
+  bigTapBtn.addEventListener('click', () => {
+    if (bigTapSelected) {
+      bigTapSelected = false;
+      updateBigTapUI();
+      updateTapModeUI();
+      return;
+    }
+    if (bigTapUsesToday >= BIG_TAP_LIMIT) {
+      alert('วันนี้ใช้โหมดสี่เหลี่ยมครบ 10 ครั้งแล้ว');
+      return;
+    }
+    if (myPoints < 5) {
+      alert('พอยท์ไม่พอ ต้องมีอย่างน้อย 5 พอยท์');
+      return;
+    }
+    if (isPlaying) {
+      alert('กำลังเล่นอยู่ เปิดโหมดใหม่รอบถัดไป');
+      return;
+    }
+    bigTapSelected = true;
+    updateBigTapUI();
+    updateTapModeUI();
+  });
+
+  // --------- เริ่มเกม / แตะปุ่มวงกลม ----------
+  tapButton.addEventListener('click', () => {
+    if (tapButton.disabled) return;
+
+    if (!isPlaying) {
+      startGame();
+      return;
+    }
+    if (!canTapNow) return;
+
+    taps++;
+    tapTimestamps.push(Date.now());
+    tapCountText.innerText = `แตะ ${taps} ครั้ง`;
+    spawnTapEffect();
+  });
+
+  // --------- แตะบนพื้นที่ Big Tap ----------
+  bigTapArea.addEventListener('click', () => {
+    if (!isPlaying) {
+      startGame();
+      return;
+    }
+    if (!canTapNow) return;
+
+    taps++;
+    tapTimestamps.push(Date.now());
+    tapCountText.innerText = `แตะ ${taps} ครั้ง`;
+    spawnTapEffect();
+  });
+
+  function startGame() {
+    taps = 0;
+    tapTimestamps = [];
+    isPlaying = true;
+    canTapNow = false;
+    tapButton.disabled = false;
+    tapCountText.innerText = 'แตะ 0 ครั้ง';
+
+    let countdown = 3;
+    tapButton.disabled = true;
+    timerText.innerText = '3';
+
+    const cd = setInterval(() => {
+      countdown--;
+      if (countdown > 0) {
+        timerText.innerText = countdown.toString();
+      } else {
+        clearInterval(cd);
+        realStart();
+      }
+    }, 400);
+  }
+
+  function realStart() {
+    taps = 0;
+    tapTimestamps = [];
+    tapButton.disabled = false;
+    tapButton.innerText = 'TAP!';
+    const startTime = Date.now();
+    canTapNow = true;
+
+    const timerInterval = setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      const remain = Math.max(0, duration - elapsed);
+      timerText.innerText = (remain / 1000).toFixed(2) + ' วินาที';
+
+      if (remain <= 0) {
+        clearInterval(timerInterval);
+      }
+    }, 30);
+
+    setTimeout(() => {
+      endGame();
+    }, duration);
+  }
+
+  function endGame() {
+    isPlaying = false;
+    canTapNow = false;
+    lastRoundTaps = taps;
+    timerText.innerText = 'หมดเวลา!';
+    tapButton.disabled = true;
+    tapButton.innerText = 'รอเริ่มใหม่';
+    showResultBtn.classList.remove('hidden');
+    restartBtn.classList.remove('hidden');
+
+    submitScore(lastRoundTaps, tapTimestamps, boostSelected, bigTapSelected);
+  }
+
+  // --------- ส่งคะแนนไป backend ----------
+  async function submitScore(taps, timestamps, useBoost, useBigTap) {
+    try {
+      const res = await fetch('/api/submit-score', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          studentId,
+          walletAddress,
+          taps,
+          tapTimestamps: timestamps,
+          useBoost,
+          useBigTap
+        })
+      });
+      const data = await res.json();
+      if (!data.ok) {
+        console.warn('submit-score error:', data.message);
+        alert(data.message || 'บันทึกคะแนนไม่สำเร็จ');
+        return;
+      }
+      myBestScore = data.bestScore;
+      if (typeof data.level === 'number') myLevel = data.level;
+      if (typeof data.totalXp === 'number') myTotalXp = data.totalXp;
+      if (typeof data.totalPlays === 'number') myTotalPlays = data.totalPlays;
+      if (Array.isArray(data.badges)) myBadges = data.badges;
+
+      if (data.missions) {
+        todayPlays = data.missions.todayPlays ?? todayPlays;
+        todayBest = data.missions.todayBest ?? todayBest;
+        missionPlayed5 = !!data.missions.played5Today;
+        missionGot15 = !!data.missions.got15Today;
+      }
+
+      if (typeof data.pointBalance === 'number') {
+        myPoints = data.pointBalance;
+      }
+
+      if (typeof data.bigTapUsesToday === 'number') {
+        bigTapUsesToday = data.bigTapUsesToday;
+      }
+
+      if (data.usedBoost) {
+        boostSelected = false;
+      }
+      if (data.usedBigTap) {
+        bigTapSelected = false;
+      }
+
+      updateXPUI();
+      updateTapButtonScale();
+      updateMissionUI();
+      updatePointsUI();
+      updateBigTapUI();
+      updateTapModeUI();
+    } catch (err) {
+      console.error(err);
+      alert('มีปัญหาในการเชื่อมต่อเซิร์ฟเวอร์');
+    }
+  }
+
+  // --------- ดูผลรอบนี้ ----------
+  showResultBtn.addEventListener('click', () => {
+    resultText.innerText = `คุณแตะได้ ${lastRoundTaps} ครั้ง`;
+    if (myBestScore != null) {
+      bestText.innerText = `สถิติที่ดีที่สุดของคุณ: ${myBestScore} ครั้ง`;
+    } else {
+      bestText.innerText = '';
+    }
+
+    statsText.innerHTML =
+      `Level: ${myLevel} (XP: ${myTotalXp})<br>` +
+      `เล่นทั้งหมด: ${myTotalPlays} รอบ<br>` +
+      `Points: ${myPoints}<br>` +
+      `Big Tap ใช้วันนี้: ${bigTapUsesToday}/${BIG_TAP_LIMIT}`;
+
+    if (myBadges && myBadges.length > 0) {
+      badgesText.innerText = `Badge: ${myBadges.join(', ')}`;
+    } else {
+      badgesText.innerText = '';
+    }
+
+    showResultBtn.classList.add('hidden');
+    showScreen(resultScreen);
+  });
+
+  playAgainBtn.addEventListener('click', () => {
+    timerText.innerText = 'พร้อม';
+    tapCountText.innerText = 'แตะ 0 ครั้ง';
+    tapButton.innerText = 'เริ่ม!';
+    tapButton.disabled = false;
+    showResultBtn.classList.add('hidden');
+    restartBtn.classList.add('hidden');
+    showScreen(gameScreen);
+  });
+
+  // ปุ่ม "เริ่มใหม่" ในหน้าเกม
+  restartBtn.addEventListener('click', () => {
+    timerText.innerText = 'พร้อม';
+    tapCountText.innerText = 'แตะ 0 ครั้ง';
+    tapButton.innerText = 'เริ่ม!';
+    tapButton.disabled = false;
+    showResultBtn.classList.add('hidden');
+    restartBtn.classList.add('hidden');
+
+    isPlaying = false;
+    canTapNow = false;
+    taps = 0;
+    tapTimestamps = [];
+  });
+
+  // --------- ดึง Ranking ----------
+  async function loadRanking() {
+    try {
+      const res = await fetch('/api/ranking');
+      const data = await res.json();
+      if (!data.ok) {
+        alert('โหลด Ranking ไม่สำเร็จ');
+        return;
+      }
+
+      const rows = data.ranking || [];
+      let html = '<table><tr><th>อันดับ</th><th>รหัสนักศึกษา</th><th>Level</th><th>คะแนน</th></tr>';
+      rows.forEach((row, index) => {
+        html += `<tr>
+          <td>${index + 1}</td>
+          <td>${row.studentId}</td>
+          <td>${row.level || 1}</td>
+          <td>${row.score}</td>
+        </tr>`;
+      });
+      html += '</table>';
+
+      rankingTableWrapper.innerHTML = html;
+
+      if (myBestScore != null) {
+        selfScoreText.innerText =
+          `Level ปัจจุบันของคุณ: ${myLevel} (XP: ${myTotalXp})\n` +
+          `คะแนนดีที่สุด: ${myBestScore} ครั้ง\n` +
+          `Points: ${myPoints}\n` +
+          `Big Tap วันนี้: ${bigTapUsesToday}/${BIG_TAP_LIMIT}`;
+      } else {
+        selfScoreText.innerText = '';
+      }
+    } catch (err) {
+      console.error(err);
+      alert('มีปัญหาในการโหลด Ranking');
+    }
+  }
+
+  showRankingBtn.addEventListener('click', () => {
+    loadRanking();
+    showScreen(rankingScreen);
+  });
+
+  showRankingBtn2.addEventListener('click', () => {
+    loadRanking();
+    showScreen(rankingScreen);
+  });
+
+  backToGameBtn.addEventListener('click', () => {
+    showScreen(gameScreen);
+  });
+</script>
+</body>
+</html>

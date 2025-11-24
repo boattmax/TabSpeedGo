@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tap Speed Dashboard</title>
+  <style>
+    body {
+      margin: 0;
+      background: #060814;
+      color: #fff;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh;
+    }
+    .wrap {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+    h1 {
+      text-align: center;
+      margin: 12px 0 4px;
+    }
+    .subtitle {
+      text-align: center;
+      font-size: 14px;
+      opacity: 0.8;
+      margin-bottom: 16px;
+    }
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .card {
+      background: #111527;
+      border-radius: 14px;
+      padding: 12px 14px;
+    }
+    .card-title {
+      font-size: 13px;
+      opacity: 0.8;
+    }
+    .card-value {
+      font-size: 24px;
+      margin-top: 6px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      margin-top: 8px;
+    }
+    th, td {
+      padding: 6px 8px;
+      border-bottom: 1px solid #25273b;
+    }
+    th {
+      background: #101223;
+      text-align: left;
+    }
+    .small {
+      font-size: 12px;
+      opacity: 0.7;
+    }
+    button {
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: none;
+      background: #ff4b4b;
+      color: #fff;
+      font-weight: bold;
+      cursor: pointer;
+      margin-bottom: 12px;
+    }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Tap Speed Dashboard</h1>
+  <div class="subtitle">สำหรับอาจารย์ / ผู้ดูแลกิจกรรม</div>
+
+  <button id="refreshBtn">Refresh ข้อมูล</button>
+
+  <div class="cards">
+    <div class="card">
+      <div class="card-title">จำนวนนักศึกษาที่เล่น</div>
+      <div class="card-value" id="totalPlayers">-</div>
+    </div>
+    <div class="card">
+      <div class="card-title">คะแนนสูงสุด</div>
+      <div class="card-value" id="maxScore">-</div>
+    </div>
+    <div class="card">
+      <div class="card-title">คะแนนเฉลี่ย</div>
+      <div class="card-value" id="avgScore">-</div>
+    </div>
+  </div>
+
+  <h3>Top 20 นักศึกษาที่คะแนนสูงสุด</h3>
+  <div class="small">ข้อมูลจากตารางคะแนนจริง</div>
+  <div id="rankingTableWrapper"></div>
+</div>
+
+<script>
+  const totalPlayersEl = document.getElementById('totalPlayers');
+  const maxScoreEl = document.getElementById('maxScore');
+  const avgScoreEl = document.getElementById('avgScore');
+  const rankingTableWrapper = document.getElementById('rankingTableWrapper');
+  const refreshBtn = document.getElementById('refreshBtn');
+
+  async function loadSummary() {
+    const res = await fetch('/api/admin/summary');
+    const data = await res.json();
+    if (!data.ok) {
+      alert('โหลดข้อมูลสรุปไม่สำเร็จ');
+      return;
+    }
+    totalPlayersEl.textContent = data.totalPlayers;
+    maxScoreEl.textContent = data.maxScore;
+    avgScoreEl.textContent = data.avgScore.toFixed(2);
+  }
+
+  async function loadRanking() {
+    const res = await fetch('/api/ranking');
+    const data = await res.json();
+    if (!data.ok) {
+      alert('โหลด Ranking ไม่สำเร็จ');
+      return;
+    }
+    const rows = (data.ranking || []).slice(0, 20);
+
+    let html = '<table><tr><th>อันดับ</th><th>รหัสนักศึกษา</th><th>คะแนน</th></tr>';
+    rows.forEach((row, index) => {
+      html += `<tr>
+        <td>${index + 1}</td>
+        <td>${row.studentId}</td>
+        <td>${row.score}</td>
+      </tr>`;
+    });
+    html += '</table>';
+
+    rankingTableWrapper.innerHTML = html;
+  }
+
+  async function refreshAll() {
+    await Promise.all([loadSummary(), loadRanking()]);
+  }
+
+  refreshBtn.addEventListener('click', refreshAll);
+
+  // โหลดครั้งแรก
+  refreshAll();
+</script>
+</body>
+</html>
